@@ -1,4 +1,5 @@
 from .generalfunctions import *
 from .latticesystem import *
 from .qwzsystem import *
-# from .amorphoussystem import *
+from .plotting_functions import *
+from .amorphoussystem import *
