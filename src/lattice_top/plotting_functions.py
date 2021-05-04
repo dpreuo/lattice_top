@@ -29,8 +29,13 @@ def plot_surface_3d(Z, lengths, title=None, xy_labels=None):
     plt.show()
 
 
-def plot_triangulation(x_vals, y_vals, z_vals):
+def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None):
 
     ax = plt.axes(projection='3d')
     ax.plot_trisurf(x_vals, y_vals, z_vals, cmap='viridis', edgecolor='none')
+    if title is not None:
+        plt.title(title)
+    if xy_labels is not None:
+        plt.xlabel(xy_labels[0])
+        plt.ylabel(xy_labels[1])
     plt.show()

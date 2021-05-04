@@ -161,13 +161,6 @@ def spaced_points(lengths: tuple, number_of_sites: int, n_optimisation_steps: in
     return cells
 
 
-def set_matrix_2x2(target_matrix, input_matrix, position):
-    a, b = position
-    target_matrix[a, b] = input_matrix[0, 0]
-    target_matrix[a+1, b] = input_matrix[1, 0]
-    target_matrix[a, b+1] = input_matrix[0, 1]
-    target_matrix[a+1, b+1] = input_matrix[1, 1]
-
 #############################################################
 ########### functions making the voronoi periodic ###########
 #############################################################
@@ -341,11 +334,19 @@ def hopping_matrix_element(displacement: list):
     vec_as_complex = (displacement[0] + 1j*displacement[1]) / mag
 
     M = np.array([
-        [1, vec_as_complex],
-        [np.conj(vec_as_complex), -1]
+        [1, -np.conj(vec_as_complex)],
+        [vec_as_complex, -1]
     ])
 
-    return M
+    return 0.5*M
+
+
+def set_matrix_2x2(target_matrix, input_matrix, position):
+    a, b = position
+    target_matrix[a, b] = input_matrix[0, 0]
+    target_matrix[a+1, b] = input_matrix[1, 0]
+    target_matrix[a, b+1] = input_matrix[0, 1]
+    target_matrix[a+1, b+1] = input_matrix[1, 1]
 
 ######################################################
 ################## the class itself ##################
@@ -358,7 +359,8 @@ class Amorphous_System(Lattice_System):
     The process for this kind of system is
 
     init: set up lengths, boundary conditions and how many sites
-    make_grid creates the lattice, voronoi lattice and returns all the edges
+    create_amorphous_lattice creates the lattice, voronoi lattice and returns all the edges
+    QWZ_decorate turns this lattice into a Hamiltonian
 
     """
 
@@ -389,6 +391,8 @@ class Amorphous_System(Lattice_System):
         elif lattice_type == 'dual':
             sites = voronoi.points
             edges = voronoi.ridge_points
+        else:
+            raise Exception('lattice type must be "voronoi" or "dual"')
 
         ### now we want to restrict back down to  periodic boundaries! ###
 
@@ -489,49 +493,58 @@ class Amorphous_System(Lattice_System):
         dt = time.time() - t1
         print(f'Amorphous lattice created - This took {round_sig(dt)} seconds')
 
-    def create_regular_lattice(self):
+    def create_regular_lattice(self, position_jitter=0):
         t1 = time.time()
 
         Lx, Ly = self._lengths
         xedge, yedge = self._edges
 
-        x_list = np.tile(np.arange(Lx), Ly)
-        y_list = np.kron(np.arange(Ly), np.ones(Lx, dtype='int'))
+        x_list = np.tile(np.arange(Lx), Ly) + 0.5
+        y_list = np.kron(np.arange(Ly), np.ones(Lx, dtype='int')) + 0.5
 
         sites1 = list(zip(x_list, y_list))
         sites = [list(site) for site in sites1]
-
         connections = []
         connection_types = []
 
-        for index_1, site in enumerate(sites):
-            # add x_shift
-            if xedge == True:
-                if site[0] < Lx - 1:
-                    x_shift = [site[0] + 1, site[1]]
-            else:
-                x_shift = [(site[0] + 1) % Lx, site[1]]
-            index_2 = sites.index(x_shift)
+        for index, site in enumerate(sites):
 
-            connections.append((index_1, index_2))
-            if site[0] == Lx-1:
-                connection_types.append((1, 0))
-            else:
-                connection_types.append((0, 0))
+            x_site = [(site[0] + 1) % Lx, site[1]]
+            y_site = [site[0], (site[1]+1) % Ly]
 
-            # add y_shift
-            if yedge == True:
-                if site[1] < Ly - 1:
-                    y_shift = [site[0], site[1] + 1]
-            else:
-                y_shift = [site[0], (site[1] + 1) % Ly]
-            index_2 = sites.index(y_shift)
+            x_index = sites.index(x_site)
+            y_index = sites.index(y_site)
 
-            connections.append((index_1, index_2))
-            if site[1] == Ly-1:
-                connection_types.append((0, 1))
+            if site[0] + 1 >= Lx:
+                x_type = (1, 0)
             else:
-                connection_types.append((0, 0))
+                x_type = (0, 0)
+
+            if site[1] + 1 >= Ly:
+                y_type = (0, 1)
+            else:
+                y_type = (0, 0)
+
+            if xedge == False:
+                connections.append((index, x_index))
+                connection_types.append(x_type)
+            else:
+                if x_type == (0, 0):
+                    connections.append((index, x_index))
+                    connection_types.append(x_type)
+
+            if yedge == False:
+                connections.append((index, y_index))
+                connection_types.append(y_type)
+            else:
+                if y_type == (0, 0):
+                    connections.append((index, y_index))
+                    connection_types.append(y_type)
+
+        if position_jitter != 0:
+            for site in sites:
+                site[0] += np.random.normal(loc=0, scale=position_jitter)
+                site[1] += np.random.normal(loc=0, scale=position_jitter)
 
         self._sites = sites
         self._connections = connections
@@ -543,7 +556,7 @@ class Amorphous_System(Lattice_System):
     #### decorate the lattice to make a Hamiltonian ####
     ####################################################
 
-    def QWZ_decorate(self, u1: float, u2: float, u_type: str):
+    def QWZ_decorate(self, u1: float, u2: float, u_type: str, angle=(0, 0)):
         t1 = time.time()
         # set up the on site energy terms
         if u_type == 'uniform':
@@ -585,9 +598,9 @@ class Amorphous_System(Lattice_System):
 
             set_matrix_2x2(hamiltonian, hopping_matrix.conj().T,
                            (2*n_2, 2*n_1))
-            set_matrix_2x2(x_dif_hamiltonian, -hopping_matrix.conj().T *
+            set_matrix_2x2(x_dif_hamiltonian, - hopping_matrix.conj().T *
                            edge_displacement[0]*1j, (2*n_2, 2*n_1))
-            set_matrix_2x2(y_dif_hamiltonian, -hopping_matrix.conj().T *
+            set_matrix_2x2(y_dif_hamiltonian, - hopping_matrix.conj().T *
                            edge_displacement[1]*1j, (2*n_2, 2*n_1))
 
         self._hamiltonian = hamiltonian
@@ -616,7 +629,7 @@ class Amorphous_System(Lattice_System):
         plt.axvline(self._lengths[0], color='grey', linestyle='--')
         plt.axhline(self._lengths[1], color='grey', linestyle='--')
 
-        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1)                  : 'red', (-1, 1): 'grey', (1, 1): 'grey'}
+        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1): 'red', (-1, 1): 'grey', (1, 1): 'grey'}
 
         for connect, connection_type in zip(self._connections, self._connection_types):
             point1 = self._sites[connect[0]].copy()
@@ -680,3 +693,31 @@ class Amorphous_System(Lattice_System):
                          point1[1] - self._lengths[1], point2[1] - self._lengths[1]], color=c)
 
         plt.show()
+
+    def cmap_state(self, state_id):
+        Z = self._states[:, state_id]
+        Z = abs(Z)[::2] + abs(Z)[1::2]
+        x_values = self._x_list[::2]
+        y_values = self._y_list[::2]
+        plt.tripcolor(x_values, y_values, Z)
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show()
+
+    def plot_index(self, index):
+        x_values = self._x_list[::2]
+        y_values = self._y_list[::2]
+        plot_triangulation(x_values, y_values, index, xy_labels=('x', 'y'))
+
+    def plot_state(self, state_id):
+        """
+        this plots an arbitrary state in our system
+        :param state_id: the number of the state you want to plot
+        :return: nowt
+        """
+
+        Z = self._states[:, state_id]
+        Z = abs(Z)[::2] + abs(Z)[1::2]
+        x_values = self._x_list[::2]
+        y_values = self._y_list[::2]
+        plot_triangulation(x_values, y_values, Z, xy_labels=('x', 'y'))

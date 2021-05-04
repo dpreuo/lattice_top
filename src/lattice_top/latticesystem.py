@@ -352,3 +352,14 @@ class Lattice_System():
             return (self._chern_marker)
         else:
             raise Exception('Need to create the chern marker first')
+
+    ########################################################
+    #################### plotting stuff ####################
+    ########################################################
+
+    def plot_dos(self, b=50):
+
+        plt.hist(self._energies, bins=b)
+        plt.show()
+
+    # TODO - plot density of states
