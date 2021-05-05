@@ -371,6 +371,39 @@ class Amorphous_System(Lattice_System):
         else:
             self._number_of_sites = number_of_sites
 
+    def export_lattice(self):
+        """exports the info for a lattice so you can save it for later
+
+        Returns:
+            dict: a dict containing the sites, connections and connection types
+        """
+        out_dict = {'sites': self._sites,
+                    'connections': self._connections,
+                    'connection_types': self._connection_types,
+                    'edges': self._edges,
+                    'lengths': self._lengths,
+                    'n_sites': self._n_sites}
+        return out_dict
+
+    @classmethod
+    def create_from_lattice(cls, lattice_info):
+        """internally sets a lattice from an input dict - note this reinitialises the whole object! 
+
+        Args:
+            lattice_info (dict): dict containing the sites, connections and connection types, lengths, boundaries and number of sites
+        """
+
+        syst = cls(lattice_info['lengths'],
+                   lattice_info['edges'], lattice_info['n_sites'])
+        # self.__init__(lattice_info['lengths'],
+        #   lattice_info['edges'], lattice_info['n_sites'])
+
+        syst._sites = lattice_info['sites']
+        syst._connections = lattice_info['connections']
+        syst._connection_types = lattice_info['connection_types']
+
+        return syst
+
     def create_amorphous_lattice(self, lattice_type: str, n_optimisation_steps=20, optimisation_rate=0.1):
         t1 = time.time()
 
@@ -629,7 +662,8 @@ class Amorphous_System(Lattice_System):
         plt.axvline(self._lengths[0], color='grey', linestyle='--')
         plt.axhline(self._lengths[1], color='grey', linestyle='--')
 
-        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1): 'red', (-1, 1): 'grey', (1, 1): 'grey'}
+        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1)
+                   : 'red', (-1, 1): 'grey', (1, 1): 'grey'}
 
         for connect, connection_type in zip(self._connections, self._connection_types):
             point1 = self._sites[connect[0]].copy()

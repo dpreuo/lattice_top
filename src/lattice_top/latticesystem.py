@@ -357,9 +357,14 @@ class Lattice_System():
     #################### plotting stuff ####################
     ########################################################
 
-    def plot_dos(self, b=50):
+    def plot_dos(self, spacing=0.1):
 
-        plt.hist(self._energies, bins=b)
+        bin = (self._energies[-1] - self._energies[0])/spacing
+        bin = int(bin)
+        plt.hist(self._energies, bins=bin)
+        plt.title('Density Of States')
+        plt.xlabel('Energy')
+        plt.ylabel('n')
         plt.show()
 
     # TODO - plot density of states
