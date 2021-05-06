@@ -224,8 +224,6 @@ class Lattice_System():
     ############## calculate various indicators ##############
     ##########################################################
 
-    # TODO - fix all the markers to be able to deal with amorphous systems
-
     def find_bott_index(self):
         t1 = time.time()
         Lx = self._lengths[0]
