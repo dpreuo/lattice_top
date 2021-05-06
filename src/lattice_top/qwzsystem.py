@@ -13,13 +13,13 @@ class QWZ_System(Lattice_System):
     ~~ then you can do whatever you want with the system ~~
     """
 
-    def __init__(self, lengths, edges):
-        super().__init__(lengths, edges)
+    def __init__(self, lengths):
+        super().__init__(lengths)
 
         # These qwz specific values will be created after initialising u_array
         self._u_vals = None
 
-    def setup_QWZ_system(self, u1, u2, u_type, u_noise_sigma=0, e_noise_sigma=0, circle_width=None, strip_width=None,
+    def setup_QWZ_system(self, edges, u1, u2, u_type, u_noise_sigma=0, e_noise_sigma=0, circle_width=None, strip_width=None,
                          angle=(0., 0.)):
         """
         This sets up the system as a Qi-Wu-Zhang system, we initialise the Hamiltonian as well as the x and y
@@ -54,6 +54,8 @@ class QWZ_System(Lattice_System):
         # PART 1: set up the u_values
 
         t1 = time.time()
+
+        self._edges = edges
 
         Lx = self._lengths[0]
         Ly = self._lengths[1]
@@ -152,7 +154,6 @@ class QWZ_System(Lattice_System):
 ########################################################
 #################### plotting stuff ####################
 ########################################################
-
 
     def plot_u_values(self):
         """

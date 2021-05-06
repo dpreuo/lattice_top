@@ -364,8 +364,8 @@ class Amorphous_System(Lattice_System):
 
     """
 
-    def __init__(self, lengths: tuple, edges: tuple, number_of_sites=None):
-        super().__init__(lengths, edges)
+    def __init__(self, lengths: tuple, number_of_sites=None):
+        super().__init__(lengths)
         if number_of_sites == None:
             self._number_of_sites = lengths[0]*lengths[1]
         else:
@@ -405,6 +405,18 @@ class Amorphous_System(Lattice_System):
         return syst
 
     def create_amorphous_lattice(self, lattice_type: str, n_optimisation_steps=20, optimisation_rate=0.1):
+        """This creates an amorphous lattice - lattice is always created with periodic boundaries - but we keep a list
+        of all the edges that cross the boundaries so they can be removed to create open boundaries!
+
+        Args:
+            lattice_type (str): 'voronoi' or 'dual'. What kind of lattice - voronoi cells or its dual, nearest neighbour connections
+            n_optimisation_steps (int, optional): how many steps of spacing all the points out you want to do. Larger numbers means its more evenly spaced but takes longer Defaults to 20.
+            optimisation_rate (float, optional): how big each step is. Larger numbers optimise faster but are more unstable Defaults to 0.1.
+
+        Raises:
+            Exception: Wrong lattice type name
+        """
+
         t1 = time.time()
 
         # create the cell positions
@@ -491,8 +503,10 @@ class Amorphous_System(Lattice_System):
         correspondence = correspondence_list(
             sites, region_list, unit_cell_points, self._lengths)
 
+        # fix all the edges so they reference only inside points!
         fix_edges(x_connections, correspondence)
         fix_edges(y_connections, correspondence)
+        # this line should be unnecessary...
         fix_edges(internal_connections, correspondence)
         fix_edges(mx_py_connections, correspondence)
         fix_edges(px_py_connections, correspondence)
@@ -500,29 +514,27 @@ class Amorphous_System(Lattice_System):
         final_edges = internal_connections
         connection_types = [(0, 0)]*len(final_edges)
 
-        # now, depending on boundary conditions, include the relevant edges!
-        if self._edges[0] == False:
-            final_edges += x_connections
-            connection_types += [(1, 0)]*len(x_connections)
+        # now, put it all together - include all the pbc edges
 
-        if self._edges[1] == False:
-            final_edges += y_connections
-            connection_types += [(0, 1)]*len(y_connections)
+        final_edges += x_connections
+        connection_types += [(1, 0)]*len(x_connections)
 
-        if self._edges[0] == False and self._edges[1] == False:
+        final_edges += y_connections
+        connection_types += [(0, 1)]*len(y_connections)
 
-            if px_py_connections != []:
-                final_edges += px_py_connections
-                connection_types += [(1, 1)]*len(px_py_connections)
+        if px_py_connections != []:
+            final_edges += px_py_connections
+            connection_types += [(1, 1)]*len(px_py_connections)
 
-            if mx_py_connections != []:
-                final_edges += mx_py_connections
-                connection_types += [(-1, 1)]*len(mx_py_connections)
+        if mx_py_connections != []:
+            final_edges += mx_py_connections
+            connection_types += [(-1, 1)]*len(mx_py_connections)
 
         # finally set the three internal things - set as tuple so they dont get changed
         self._sites = tuple(unit_cell_points)
         self._connections = tuple(final_edges)
         self._connection_types = tuple(connection_types)
+
         dt = time.time() - t1
         print(f'Amorphous lattice created - This took {round_sig(dt)} seconds')
 
@@ -530,7 +542,6 @@ class Amorphous_System(Lattice_System):
         t1 = time.time()
 
         Lx, Ly = self._lengths
-        xedge, yedge = self._edges
 
         x_list = np.tile(np.arange(Lx), Ly) + 0.5
         y_list = np.kron(np.arange(Ly), np.ones(Lx, dtype='int')) + 0.5
@@ -558,21 +569,11 @@ class Amorphous_System(Lattice_System):
             else:
                 y_type = (0, 0)
 
-            if xedge == False:
-                connections.append((index, x_index))
-                connection_types.append(x_type)
-            else:
-                if x_type == (0, 0):
-                    connections.append((index, x_index))
-                    connection_types.append(x_type)
+            connections.append((index, x_index))
+            connection_types.append(x_type)
 
-            if yedge == False:
-                connections.append((index, y_index))
-                connection_types.append(y_type)
-            else:
-                if y_type == (0, 0):
-                    connections.append((index, y_index))
-                    connection_types.append(y_type)
+            connections.append((index, y_index))
+            connection_types.append(y_type)
 
         if position_jitter != 0:
             for site in sites:
@@ -582,15 +583,17 @@ class Amorphous_System(Lattice_System):
         self._sites = sites
         self._connections = connections
         self._connection_types = connection_types
-        self._x_list = x_list
-        self._y_list = y_list
 
     ####################################################
     #### decorate the lattice to make a Hamiltonian ####
     ####################################################
 
-    def QWZ_decorate(self, u1: float, u2: float, u_type: str, angle=(0, 0)):
+    def QWZ_decorate(self, edges: tuple, u1: float, u2: float, u_type: str, angle=(0, 0)):
         t1 = time.time()
+
+        x_edge, y_edge = edges
+        self._edges = edges
+
         # set up the on site energy terms
         if u_type == 'uniform':
             u_vals = np.array([u1]*len(self._sites))
@@ -608,7 +611,14 @@ class Amorphous_System(Lattice_System):
             hamiltonian[j*2+1, j*2+1] = -u_vals[j]
 
         # set hoppings
-        for edge in self._connections:
+        for edge, edge_type in zip(self._connections, self._connection_types):
+
+            if x_edge:
+                if edge_type[0] != 0:
+                    continue
+            if y_edge:
+                if edge_type[1] != 0:
+                    continue
 
             n_1 = edge[0]
             n_2 = edge[1]

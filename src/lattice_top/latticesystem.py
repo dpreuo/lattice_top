@@ -133,20 +133,19 @@ def fermi_occupation(energy: np.ndarray, beta: float):
 
 class Lattice_System():
     # root stuff
-    def __init__(self, lengths, edges):
+    def __init__(self, lengths):
         """
         this initialises the system - we are just gonna set up the system size and the boundary conditions here
-        :param lengths: length in the x_direction
-        :param edges: length in the y_direction
+        :param lengths: length in the x and y direction
         """
         self._lengths = lengths
-        self._edges = edges
 
         # These must be set by you initialiser - the positions of each cell
         self._x_list = None
         self._y_list = None
 
         # These after you initialise the Hamiltonian
+        self._edges = None
         self._hamiltonian = None
         self._x_dif_hamiltonian = None
         self._y_dif_hamiltonian = None
