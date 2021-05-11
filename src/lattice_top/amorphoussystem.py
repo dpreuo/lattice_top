@@ -380,7 +380,6 @@ class Amorphous_System(Lattice_System):
         out_dict = {'sites': self._sites,
                     'connections': self._connections,
                     'connection_types': self._connection_types,
-                    'edges': self._edges,
                     'lengths': self._lengths,
                     'n_sites': self._n_sites}
         return out_dict
@@ -393,11 +392,7 @@ class Amorphous_System(Lattice_System):
             lattice_info (dict): dict containing the sites, connections and connection types, lengths, boundaries and number of sites
         """
 
-        syst = cls(lattice_info['lengths'],
-                   lattice_info['edges'], lattice_info['n_sites'])
-        # self.__init__(lattice_info['lengths'],
-        #   lattice_info['edges'], lattice_info['n_sites'])
-
+        syst = cls(lattice_info['lengths'],  lattice_info['n_sites'])
         syst._sites = lattice_info['sites']
         syst._connections = lattice_info['connections']
         syst._connection_types = lattice_info['connection_types']
@@ -531,9 +526,9 @@ class Amorphous_System(Lattice_System):
             connection_types += [(-1, 1)]*len(mx_py_connections)
 
         # finally set the three internal things - set as tuple so they dont get changed
-        self._sites = tuple(unit_cell_points)
-        self._connections = tuple(final_edges)
-        self._connection_types = tuple(connection_types)
+        self._sites = tuple(tuple(s) for s in unit_cell_points)
+        self._connections = tuple(tuple(e) for e in final_edges)
+        self._connection_types = tuple(tuple(ct) for ct in connection_types)
 
         dt = time.time() - t1
         print(f'Amorphous lattice created - This took {round_sig(dt)} seconds')
@@ -580,9 +575,10 @@ class Amorphous_System(Lattice_System):
                 site[0] += np.random.normal(loc=0, scale=position_jitter)
                 site[1] += np.random.normal(loc=0, scale=position_jitter)
 
-        self._sites = sites
-        self._connections = connections
-        self._connection_types = connection_types
+        # finally set the three internal things - set as tuple so they dont get changed
+        self._sites = tuple(tuple(s) for s in sites)
+        self._connections = tuple(tuple(c) for c in connections)
+        self._connection_types = tuple(tuple(ct) for ct in connection_types)
 
     ####################################################
     #### decorate the lattice to make a Hamiltonian ####
@@ -676,8 +672,8 @@ class Amorphous_System(Lattice_System):
                    : 'red', (-1, 1): 'grey', (1, 1): 'grey'}
 
         for connect, connection_type in zip(self._connections, self._connection_types):
-            point1 = self._sites[connect[0]].copy()
-            point2 = self._sites[connect[1]].copy()
+            point1 = list(self._sites[connect[0]])
+            point2 = list(self._sites[connect[1]])
             c = c_dict[connection_type]
 
             if connection_type == (0, 0):
@@ -743,15 +739,9 @@ class Amorphous_System(Lattice_System):
         Z = abs(Z)[::2] + abs(Z)[1::2]
         x_values = self._x_list[::2]
         y_values = self._y_list[::2]
-        plt.tripcolor(x_values, y_values, Z)
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
-
-    def plot_index(self, index):
-        x_values = self._x_list[::2]
-        y_values = self._y_list[::2]
-        plot_triangulation(x_values, y_values, index, xy_labels=('x', 'y'))
+        state_name = f'State number: {state_id}, Energy = {self._energies[state_id]}'
+        cmap_triangulation(x_values, y_values, Z,
+                           title=state_name, xy_labels=('x', 'y'))
 
     def plot_state(self, state_id):
         """
@@ -764,4 +754,17 @@ class Amorphous_System(Lattice_System):
         Z = abs(Z)[::2] + abs(Z)[1::2]
         x_values = self._x_list[::2]
         y_values = self._y_list[::2]
-        plot_triangulation(x_values, y_values, Z, xy_labels=('x', 'y'))
+        state_name = f'State number: {state_id}, Energy = {self._energies[state_id]}'
+        plot_triangulation(x_values, y_values, Z,
+                           title=state_name, xy_labels=('x', 'y'))
+
+    def plot_index(self, index, title=None):
+        x_values = self._x_list[::2]
+        y_values = self._y_list[::2]
+        plot_triangulation(x_values, y_values, index, xy_labels=('x', 'y'))
+
+    def cmap_index(self, index, title=None, range=None):
+        x_values = self._x_list[::2]
+        y_values = self._y_list[::2]
+        cmap_triangulation(x_values, y_values, index, title=title,
+                           xy_labels=('x', 'y'), range=range)
