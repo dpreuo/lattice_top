@@ -363,5 +363,3 @@ class Lattice_System():
         plt.xlabel('Energy')
         plt.ylabel('n')
         plt.show()
-
-    # TODO - plot density of states
