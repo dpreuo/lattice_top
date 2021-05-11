@@ -39,3 +39,16 @@ def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None):
         plt.xlabel(xy_labels[0])
         plt.ylabel(xy_labels[1])
     plt.show()
+
+
+def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None):
+    plt.tripcolor(x_vals, y_vals, z_vals)
+    plt.colorbar()
+    if range is not None:
+        plt.clim(range[0], range[1])
+    if title is not None:
+        plt.title(title)
+    if xy_labels is not None:
+        plt.xlabel(xy_labels[0])
+        plt.ylabel(xy_labels[1])
+    plt.show()
