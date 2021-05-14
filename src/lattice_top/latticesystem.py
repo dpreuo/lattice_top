@@ -111,17 +111,17 @@ def pick_right_states_extended(H: np.ndarray, perturbations: list, threshold=1e-
         return energies, states
 
 
-def fermi_occupation(energy: np.ndarray, beta: float):
+def fermi_occupation(energy: np.ndarray, beta: float, fermi_energy: float):
     # check if the value is too big for exp - if it is we jst use a step function!
 
     if beta == np.inf:
-        return (1. * (energy <= 0))
+        return (1. * (energy <= fermi_energy))
     else:
-        non_overload_array = abs(beta * energy) <= 700
+        non_overload_array = abs(beta * (energy-fermi_energy)) <= 700
 
-        a = 1 / (np.exp(beta * energy, where=non_overload_array) +
+        a = 1 / (np.exp(beta * (energy-fermi_energy), where=non_overload_array) +
                  1) * non_overload_array
-        b = (beta * energy <= 0) * (1 - non_overload_array)
+        b = (beta * (energy-fermi_energy) <= 0) * (1 - non_overload_array)
 
         return a + b
 
@@ -152,6 +152,7 @@ class Lattice_System():
         self._n_sites = None
 
         # then once you solve the Hamiltonian - these are used in a lot of scripts for different quantities.
+        self._fermi_energy = None
         self._energies = None
         self._states = None
         self._degenerate_list = None
@@ -186,7 +187,7 @@ class Lattice_System():
     ################# initialise the system #################
     #########################################################
 
-    def solve_Hamiltonian(self):
+    def solve_Hamiltonian(self, fermi_energy=0):
         """
         This code solves the Hamiltonian and sets the states projectors and projected derivatives
         :return: none
@@ -207,17 +208,22 @@ class Lattice_System():
                                        [self._x_dif_hamiltonian, self._y_dif_hamiltonian], return_list=True)
 
         self._projector = self._states @ np.diag(
-            self._energies <= 0) @ np.conj(self._states).T
+            self._energies <= fermi_energy) @ np.conj(self._states).T
 
         self._jx_energy_basis = self._states.conj().T \
             @ self._x_dif_hamiltonian @ self._states
         self._jy_energy_basis = self._states.conj().T \
             @ self._y_dif_hamiltonian @ self._states
 
+        self._fermi_energy = fermi_energy
         self._E_dif = self._energies[:, np.newaxis] - self._energies
         self._E_dif = -self._E_dif + 1e20 * (self._E_dif.__abs__() <= 1e-8)
         dt = time.time() - t1
         print(f'Hamiltonian solved - This took {round_sig(dt)} seconds')
+
+    def reset_fermi_level(self, fermi_energy):
+        self._projector = self._states @ np.diag(
+            self._energies <= fermi_energy) @ np.conj(self._states).T
 
     ##########################################################
     ############## calculate various indicators ##############
@@ -281,7 +287,7 @@ class Lattice_System():
         Ly = self._lengths[1]
 
         efactor = 1 / (self._E_dif * self._E_dif)
-        fi = fermi_occupation(self._energies, beta)
+        fi = fermi_occupation(self._energies, beta, self._fermi_energy)
 
         fij = fi[:, np.newaxis] - fi
         factor = fij * (efactor)
