@@ -51,6 +51,7 @@ class Lattice_System():
         self._crosshair_position = None
         self._crosshair_list = None
         self._crosshair_sums = None
+        self._crosshair_value = None
 
     def __str__(self):
 
@@ -258,10 +259,23 @@ class Lattice_System():
         for size in np.linspace(0, limit, 100):
             circle_in = np.sqrt(
                 (self._x_list-position[0])**2 + (self._y_list-position[1])**2) <= size
-            s.append(sum(circle_in * crosshair * circle_in[:np.newaxis]))
+            s.append(sum(circle_in * self._crosshair_list *
+                     circle_in[:np.newaxis]))
 
+        max_value = max(abs(s))
+        max_index = abs(s).index(max_value)
+
+        self._crosshair_value = s[max_index]
         self._crosshair_sums = s
         self._crosshair_position = position
+
+    @property
+    def crosshair(self):
+
+        if self._crosshair_value is not None:
+            return (self._crosshair_value)
+        else:
+            raise Exception('Need to create the crosshair first')
 
     def plot_crosshair_graph(self):
         limit = max(self._lengths)
