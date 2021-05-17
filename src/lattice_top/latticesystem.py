@@ -222,6 +222,7 @@ class Lattice_System():
         print(f'Hamiltonian solved - This took {round_sig(dt)} seconds')
 
     def reset_fermi_level(self, fermi_energy):
+        self._fermi_energy = fermi_energy
         self._projector = self._states @ np.diag(
             self._energies <= fermi_energy) @ np.conj(self._states).T
 
