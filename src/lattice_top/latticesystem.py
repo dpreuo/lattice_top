@@ -47,6 +47,11 @@ class Lattice_System():
         self._adiabatic_bott_index = None
         self._local_kubo = None
 
+        # crosshair marker
+        self._crosshair_position = None
+        self._crosshair_list = None
+        self._crosshair_sums = None
+
     def __str__(self):
 
         # this tells you what bits of the object have been initialised and what the system size is
@@ -245,7 +250,23 @@ class Lattice_System():
         step_y = self._y_list >= position[1]
 
         crosshair = self._projector * step_x @ Q * step_y @ self._projector
-        crosshair = 4*np.pi*np.diag(crosshair).imag
+        self._crosshair_list = 4*np.pi*np.diag(crosshair).imag
+
+        s = []
+        limit = max(self._lengths)
+
+        for size in np.linspace(0, limit, 100):
+            circle_in = np.sqrt(
+                (self._x_list-position[0])**2 + (self._y_list-position[1])**2) <= size
+            s.append(sum(circle_in * crosshair * circle_in[:np.newaxis]))
+
+        self._crosshair_sums = s
+        self._crosshair_position = position
+
+    def plot_crosshair_graph(self):
+        limit = max(self._lengths)
+        plt.plot(np.linspace(0, limit, 100), self._crosshair_sums)
+        plt.show()
 
     ########################################################
     #################### plotting stuff ####################
