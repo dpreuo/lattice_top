@@ -190,6 +190,14 @@ class QWZ_System(Lattice_System):
         plt.colorbar()
         plt.show()
 
+    def cmap_index(self, index, name=None):
+        Z = index.reshape((self._lengths[1], self._lengths[0]))
+        plt.pcolor(Z)
+        if name is not None:
+            plt.title(name)
+        plt.colorbar()
+        plt.show()
+
     def plot_index(self, index, name=None):
         Z = index.reshape((self._lengths[1], self._lengths[0]))
         plot_surface_3d(Z, self._lengths, title=name, xy_labels=('x', 'y'))
