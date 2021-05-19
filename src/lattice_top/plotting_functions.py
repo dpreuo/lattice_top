@@ -1,7 +1,7 @@
 from .generalfunctions import *
 
 
-def plot_surface_3d(Z, lengths, title=None, xy_labels=None):
+def plot_surface_3d(Z, lengths, title=None, xy_labels=None, range=None, show=True):
     """This plots the grid of values as a surface in a (Lx,Ly) space
 
     Args:
@@ -17,6 +17,8 @@ def plot_surface_3d(Z, lengths, title=None, xy_labels=None):
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
+    if range is not None:
+        ax.set_zlim(range[0], range[1])
     if title is not None:
         plt.title(title)
     if xy_labels is not None:
@@ -26,22 +28,26 @@ def plot_surface_3d(Z, lengths, title=None, xy_labels=None):
                            linewidth=0, antialiased=False)
     fig.colorbar(surf, shrink=0.5, aspect=5)
 
-    plt.show()
+    if show == True:
+        plt.show()
 
 
-def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None):
+def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True):
 
     ax = plt.axes(projection='3d')
     ax.plot_trisurf(x_vals, y_vals, z_vals, cmap='viridis', edgecolor='none')
+    if range is not None:
+        ax.set_zlim(range[0], range[1])
     if title is not None:
         plt.title(title)
     if xy_labels is not None:
         plt.xlabel(xy_labels[0])
         plt.ylabel(xy_labels[1])
-    plt.show()
+    if show == True:
+        plt.show()
 
 
-def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None):
+def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True):
     plt.tripcolor(x_vals, y_vals, z_vals)
     plt.colorbar()
     if range is not None:
@@ -51,4 +57,6 @@ def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range
     if xy_labels is not None:
         plt.xlabel(xy_labels[0])
         plt.ylabel(xy_labels[1])
-    plt.show()
+
+    if show == True:
+        plt.show()
