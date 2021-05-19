@@ -33,6 +33,7 @@ class Lattice_System():
         self._states = None
         self._degenerate_list = None
         self._projector = None
+        self._n_occupied = None
 
         # note this is a matrix of the difference of energy eigenvalues
         self._E_dif = None
@@ -92,6 +93,8 @@ class Lattice_System():
         self._projector = self._states @ np.diag(
             self._energies <= fermi_energy) @ np.conj(self._states).T
 
+        self._n_occupied = sum(self._energies <= fermi_energy)
+
         self._jx_energy_basis = self._states.conj().T \
             @ self._x_dif_hamiltonian @ self._states
         self._jy_energy_basis = self._states.conj().T \
@@ -105,6 +108,7 @@ class Lattice_System():
 
     def reset_fermi_level(self, fermi_energy):
         self._fermi_energy = fermi_energy
+        self._n_occupied = sum(self._energies <= fermi_energy)
         self._projector = self._states @ np.diag(
             self._energies <= fermi_energy) @ np.conj(self._states).T
 
@@ -132,7 +136,7 @@ class Lattice_System():
 
         M = la.logm(M)
 
-        out = np.diag(M) * Lx * Ly
+        out = np.diag(M) * self._n_occupied
 
         bott_index_tr = np.imag(out[::2] + out[1::2]) / (2 * np.pi)
         self._bott_index = bott_index_tr
@@ -143,8 +147,6 @@ class Lattice_System():
     def find_adiabatic_bott_index(self):
 
         t1 = time.time()
-        Lx = self._lengths[0]
-        Ly = self._lengths[1]
 
         P_vector = (self._energies <= 0)
         Q_vector = (self._energies > 0)
@@ -166,8 +168,6 @@ class Lattice_System():
 
     def find_local_kubo(self, beta=np.inf):
         t1 = time.time()
-        Lx = self._lengths[0]
-        Ly = self._lengths[1]
 
         efactor = 1 / (self._E_dif * self._E_dif)
         fi = fermi_occupation(self._energies, beta, self._fermi_energy)
@@ -192,9 +192,6 @@ class Lattice_System():
 
     def find_chern_marker(self):
         t1 = time.time()
-
-        lx = self._lengths[0]
-        ly = self._lengths[1]
 
         X = self._x_list
         Y = self._y_list
@@ -262,11 +259,11 @@ class Lattice_System():
             s.append(sum(circle_in * self._crosshair_list *
                      circle_in[:np.newaxis]))
 
-        max_value = max(abs(s))
-        max_index = abs(s).index(max_value)
+        max_index = np.argmax(np.abs(s))
 
         self._crosshair_value = s[max_index]
         self._crosshair_sums = s
+        self._crosshair_radii = np.linspace(0, limit, 100)
         self._crosshair_position = position
 
     @property
@@ -279,7 +276,7 @@ class Lattice_System():
 
     def plot_crosshair_graph(self):
         limit = max(self._lengths)
-        plt.plot(np.linspace(0, limit, 100), self._crosshair_sums)
+        plt.plot(self._crosshair_radii, self._crosshair_sums)
         plt.show()
 
     ########################################################
