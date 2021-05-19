@@ -399,6 +399,10 @@ class Amorphous_System(Lattice_System):
 
         return syst
 
+    ############################################################
+    ################ Lattice Creation Functions ################
+    ############################################################
+
     def create_amorphous_lattice(self, lattice_type: str, n_optimisation_steps=20, optimisation_rate=0.1):
         """This creates an amorphous lattice - lattice is always created with periodic boundaries - but we keep a list
         of all the edges that cross the boundaries so they can be removed to create open boundaries!
@@ -533,6 +537,10 @@ class Amorphous_System(Lattice_System):
         dt = time.time() - t1
         print(f'Amorphous lattice created - This took {round_sig(dt)} seconds')
 
+    def create_triangular_lattice(self):
+        pass
+    # TODO - triangular lattice function
+
     def create_regular_lattice(self, position_jitter=0):
         t1 = time.time()
 
@@ -585,6 +593,7 @@ class Amorphous_System(Lattice_System):
     ####################################################
 
     def QWZ_decorate(self, edges: tuple, u1: float, u2: float, u_type: str, angle=(0, 0)):
+        # TODO - get the angle bit here to actually do anything
         t1 = time.time()
 
         x_edge, y_edge = edges
@@ -668,8 +677,7 @@ class Amorphous_System(Lattice_System):
         plt.axvline(self._lengths[0], color='grey', linestyle='--')
         plt.axhline(self._lengths[1], color='grey', linestyle='--')
 
-        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1)
-                   : 'red', (-1, 1): 'grey', (1, 1): 'grey'}
+        c_dict = {(0, 0): 'black', (1, 0): 'green', (0, 1)                  : 'red', (-1, 1): 'grey', (1, 1): 'grey'}
 
         for connect, connection_type in zip(self._connections, self._connection_types):
             point1 = list(self._sites[connect[0]])
@@ -734,16 +742,16 @@ class Amorphous_System(Lattice_System):
 
         plt.show()
 
-    def cmap_state(self, state_id):
+    def cmap_state(self, state_id, show=True):
         Z = self._states[:, state_id]
         Z = abs(Z)[::2] + abs(Z)[1::2]
         x_values = self._x_list[::2]
         y_values = self._y_list[::2]
         state_name = f'State number: {state_id}, Energy = {self._energies[state_id]}'
         cmap_triangulation(x_values, y_values, Z,
-                           title=state_name, xy_labels=('x', 'y'))
+                           title=state_name, xy_labels=('x', 'y'), show=show)
 
-    def plot_state(self, state_id):
+    def plot_state(self, state_id, show=True):
         """
         this plots an arbitrary state in our system
         :param state_id: the number of the state you want to plot
@@ -756,15 +764,16 @@ class Amorphous_System(Lattice_System):
         y_values = self._y_list[::2]
         state_name = f'State number: {state_id}, Energy = {self._energies[state_id]}'
         plot_triangulation(x_values, y_values, Z,
-                           title=state_name, xy_labels=('x', 'y'))
+                           title=state_name, xy_labels=('x', 'y'), show=show)
 
-    def plot_index(self, index, title=None):
+    def plot_index(self, index, title=None, range=None, show=True):
         x_values = self._x_list[::2]
         y_values = self._y_list[::2]
-        plot_triangulation(x_values, y_values, index, xy_labels=('x', 'y'))
+        plot_triangulation(x_values, y_values, index,
+                           xy_labels=('x', 'y'), range=range, show=show)
 
-    def cmap_index(self, index, title=None, range=None):
+    def cmap_index(self, index, title=None, range=None, show=True):
         x_values = self._x_list[::2]
         y_values = self._y_list[::2]
         cmap_triangulation(x_values, y_values, index, title=title,
-                           xy_labels=('x', 'y'), range=range)
+                           xy_labels=('x', 'y'), range=range, show=show)
