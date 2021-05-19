@@ -155,6 +155,7 @@ class QWZ_System(Lattice_System):
 #################### plotting stuff ####################
 ########################################################
 
+
     def plot_u_values(self):
         """
         this plots the u_values of the system in a 3d plot!
@@ -168,7 +169,7 @@ class QWZ_System(Lattice_System):
         plot_surface_3d(self._u_vals, self._lengths,
                         title='QWZ u Values', xy_labels=('x', 'y'))
 
-    def plot_state(self, state_id):
+    def plot_state(self, state_id, show=True):
         """
         this plots an arbitrary state in our system
         :param state_id: the number of the state you want to plot
@@ -180,24 +181,27 @@ class QWZ_System(Lattice_System):
 
         Z = Z.reshape(self._lengths[1], self._lengths[0])
         plot_surface_3d(Z, self._lengths, title='State Number: ' +
-                        str(state_id), xy_labels=('x', 'y'))
+                        str(state_id), xy_labels=('x', 'y'), show=show)
 
-    def cmap_state(self, state_id):
+    def cmap_state(self, state_id, show=True):
         Z = self._states[:, state_id]
         Z = abs(Z)[::2] + abs(Z)[1::2]
         Z = Z.reshape((self._lengths[1], self._lengths[0]))
         plt.pcolor(Z)
         plt.colorbar()
-        plt.show()
+        if show == True:
+            plt.show()
 
-    def cmap_index(self, index, name=None):
+    def cmap_index(self, index, name=None, show=True):
         Z = index.reshape((self._lengths[1], self._lengths[0]))
         plt.pcolor(Z)
         if name is not None:
             plt.title(name)
         plt.colorbar()
-        plt.show()
+        if show == True:
+            plt.show()
 
-    def plot_index(self, index, name=None):
+    def plot_index(self, index, name=None, range=None, show=True):
         Z = index.reshape((self._lengths[1], self._lengths[0]))
-        plot_surface_3d(Z, self._lengths, title=name, xy_labels=('x', 'y'))
+        plot_surface_3d(Z, self._lengths, title=name,
+                        xy_labels=('x', 'y'), range=range, show=show)
