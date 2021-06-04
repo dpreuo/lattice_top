@@ -32,10 +32,14 @@ def plot_surface_3d(Z, lengths, title=None, xy_labels=None, range=None, show=Tru
         plt.show()
 
 
-def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True):
+def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True, cmap=None):
 
     ax = plt.axes(projection='3d')
-    ax.plot_trisurf(x_vals, y_vals, z_vals, cmap='viridis', edgecolor='none')
+    if cmap is not None:
+        ax.plot_trisurf(x_vals, y_vals, z_vals, cmap=cmap, edgecolor='none')
+    else:
+        ax.plot_trisurf(x_vals, y_vals, z_vals, cmap='viridis',
+                        edgecolor='none')
     if range is not None:
         ax.set_zlim(range[0], range[1])
     if title is not None:
@@ -47,8 +51,11 @@ def plot_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range
         plt.show()
 
 
-def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True):
-    plt.tripcolor(x_vals, y_vals, z_vals)
+def cmap_triangulation(x_vals, y_vals, z_vals, title=None, xy_labels=None, range=None, show=True, cmap=None):
+    if cmap is not None:
+        plt.tripcolor(x_vals, y_vals, z_vals, cmap=cmap)
+    else:
+        plt.tripcolor(x_vals, y_vals, z_vals)
     plt.colorbar()
     if range is not None:
         plt.clim(range[0], range[1])
