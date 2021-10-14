@@ -537,10 +537,6 @@ class Amorphous_System(Lattice_System):
         dt = time.time() - t1
         print(f'Amorphous lattice created - This took {round_sig(dt)} seconds')
 
-    def create_triangular_lattice(self):
-        pass
-    # TODO - triangular lattice function
-
     def create_regular_lattice(self, position_jitter=0):
         t1 = time.time()
 
@@ -592,8 +588,8 @@ class Amorphous_System(Lattice_System):
     #### decorate the lattice to make a Hamiltonian ####
     ####################################################
 
-    def QWZ_decorate(self, edges: tuple, u1: float, u2: float, u_type: str, angle=(0, 0)):
-        # TODO - get the angle bit here to actually do anything
+    def QWZ_decorate(self, edges: tuple, u1: float, u2: float, u_type: str, angle=(0., 0.)):
+
         t1 = time.time()
 
         x_edge, y_edge = edges
@@ -634,6 +630,12 @@ class Amorphous_System(Lattice_System):
             edge_displacement = pbc_displacement(p1, p2, self._lengths)
             hopping_matrix = hopping_matrix_element(edge_displacement)
 
+            # add magnetic field terms!
+            x_phase = np.exp(1j*angle[0]*edge_displacement[0]/self._lengths[0])
+            y_phase = np.exp(1j*angle[1]*edge_displacement[1]/self._lengths[1])
+            hopping_phase = x_phase*y_phase
+            hopping_matrix = hopping_matrix*hopping_phase
+            
             # set hopping in main hamiltonian
             set_matrix_2x2(hamiltonian, hopping_matrix,  (2*n_1, 2*n_2))
 
@@ -642,8 +644,7 @@ class Amorphous_System(Lattice_System):
             set_matrix_2x2(y_dif_hamiltonian, hopping_matrix *
                            edge_displacement[1]*1j, (2*n_1, 2*n_2))
 
-            hopping_matrix = hopping_matrix
-
+            # set conjugate hopping
             set_matrix_2x2(hamiltonian, hopping_matrix.conj().T,
                            (2*n_2, 2*n_1))
             set_matrix_2x2(x_dif_hamiltonian, - hopping_matrix.conj().T *

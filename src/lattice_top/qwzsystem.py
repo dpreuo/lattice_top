@@ -34,10 +34,10 @@ class QWZ_System(Lattice_System):
         :param u_type: either 'strip', 'circle' or 'uniform'
         :param u_noise_sigma: adds some gaussian noise to the u values with sigma, default is 0 (no noise)
         :param e_noise_sigma: adds some energy cost noise - ie overall energy for being in a unit cell
-        :param circle_width: if you want to put a custom width for the circle, default is a third of the width
-        :param strip_width: if you want to put a custom width for the strip, default is half the width
-        :param angle: this adds a static magnetic field to the system - this is to stop you from hitting degenerate points
-        in your discretisation of the states
+        :param circle_width: if you want to put a custom width for the circle, default is a third of the system size
+        :param strip_width: if you want to put a custom width for the strip, default is half the system size
+        :param angle: this adds a static magnetic field to the system - this is to stop you from hitting degenerate points. Magnetic field adds an angle to each hopping. An angle of 2 pi corresponds with each hopping picking up 2 pi / L
+        
         :return: nothing
 
         Internally sets:
@@ -113,8 +113,8 @@ class QWZ_System(Lattice_System):
         self._y_list = np.kron(y_list, [1, 1])
 
         A = np.array([[1, 0], [0, -1]])
-        Bx = np.exp(1j * angle[0]) * (1 / 2) * np.array([[1, 1j], [1j, -1]])
-        By = np.exp(1j * angle[1]) * (1 / 2) * np.array([[1, 1], [-1, -1]])
+        Bx = np.exp(1j * angle[0]/Lx) * (1 / 2) * np.array([[1, 1j], [1j, -1]])
+        By = np.exp(1j * angle[1]/Lx) * (1 / 2) * np.array([[1, 1], [-1, -1]])
 
         lx_limit = Lx if xedge is False else 2 * Lx
         ly_limit = Ly if yedge is False else 2 * Ly
