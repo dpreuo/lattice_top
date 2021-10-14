@@ -131,3 +131,4 @@ venv.bak/
 # custom things for this project
 test_notepads/
 tests*
+notebooks/

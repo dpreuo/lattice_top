@@ -665,6 +665,7 @@ class Amorphous_System(Lattice_System):
         dt = time.time() - t1
         print(f'Hamiltonian created - This took {round_sig(dt)} seconds')
 
+
     ####################################################
     ################## plotting stuff ##################
     ####################################################
