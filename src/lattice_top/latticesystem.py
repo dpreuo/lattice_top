@@ -274,10 +274,13 @@ class Lattice_System():
         else:
             raise Exception('Need to create the crosshair first')
 
-    def plot_crosshair_graph(self):
+    def plot_crosshair_graph(self, ax = None):
+        if ax is None:
+            ax = plt.gca()
+
         limit = max(self._lengths)
-        plt.plot(self._crosshair_radii, self._crosshair_sums)
-        plt.show()
+        ax.plot(self._crosshair_radii, self._crosshair_sums)
+        return ax
 
     ########################################################
     #################### plotting stuff ####################
